@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.itheima.dao.IOrdersDao">
+    <resultMap id="orderMap" type="Orders">
+        <id property="id" column="id"/>
+        <result property="orderNum" column="orderNum"/>
+        <result property="orderTime" column="orderTime"/>
+        <result property="orderStatus" column="orderStatus"/>
+        <result property="peopleCount" column="peopleCount"/>
+        <result property="payType" column="payType"/>
+        <result property="orderDesc" column="orderDesc"/>
+
+<!--        第一种方式-->
+<!--        <association property="product" column="productId" javaType="Product">-->
+<!--            <id property="id" column="id"/>-->
+<!--            <result property="productNum" column="productNum"/>-->
+<!--            <result property="productName" column="productName"/>-->
+<!--            <result property="cityName" column="cityName"/>-->
+<!--            <result property="departureTime" column="departureTime"/>-->
+<!--            <result property="productPrice" column="productPrice"/>-->
+<!--            <result property="productDesc" column="productDesc"/>-->
+<!--            <result property="productStatus" column="productStatus"/>-->
+<!--        </association>-->
+
+<!--        第二种方式-->
+        <association property="product" column="productId" select="com.itheima.dao.IProductDao.findById"/>
+    </resultMap>
+
+
+    <resultMap id="ByIdOrderMap" type="Orders">
+        <id column="id" property="id"/>
+        <result column="orderNum" property="orderNum"/>
+        <result column="orderTime" property="orderTime"/>
+        <result column="orderStatus" property="orderStatus"/>
+        <result column="peopleCount" property="peopleCount"/>
+        <result column="payType" property="payType"/>
+        <result column="orderDesc" property="orderDesc"/>
+        <association column="productId" property="product" select="com.itheima.dao.IProductDao.findById"/>
+        <association column="memberId" property="member" select="com.itheima.dao.IMemberDao.findById"/>
+        <collection column="id" property="travellers" select="com.itheima.dao.ITravellerDao.findByOrdersId"/>
+    </resultMap>
+
+
+    <select id="findAll" resultMap="orderMap">
+        select * from orders
+    </select>
+
+
+    <select id="findById" resultMap="ByIdOrderMap">
+        select * from orders where id = #{id}
+    </select>
+
+</mapper>

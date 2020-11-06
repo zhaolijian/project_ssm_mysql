@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+<!--    spring注解，用于配置service层和dao层，spring结合mybatis   -->
+
+<!--    扫描service层和dao层-->
+    <context:component-scan base-package="com.itheima.service"/>
+    <context:component-scan base-package="com.itheima.dao"/>
+
+<!--    导入db.properties文件-->
+    <context:property-placeholder location="classpath:db.properties"/>
+
+<!--    配置datasource数据源-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="${jdbc.driverClass}"/>
+        <property name="jdbcUrl" value="${jdbc.jdbcUrl}"/>
+        <property name="user" value="${jdbc.user}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+
+<!--    创建SqlSessionFactory,SqlSessionFactoryBean是SqlSessionFactory的接口-->
+<!--    SqlSessionFactory的作用是创建会话，即数据库的connection操作-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+<!--        传入pageHelper插件，实现分页-->
+        <property name="plugins">
+            <array>
+<!--                插入插件的对象-->
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <props>
+<!--                            分页插件会自动检测当前的数据库链接，自动选择合适的分页方式，当前为配置分页插件使用那种方言-->
+                            <prop key="helperDialect">mysql</prop>
+<!--                            分页合理化参数，默认为false,当该参数设置为true时，pageNum<=0时会查询第一页，当pageNum超出总数时会查询最后一页-->
+                            <prop key="reasonable">true</prop>
+                        </props>
+                    </property>
+                </bean>
+            </array>
+        </property>
+
+<!--    配置别名，parameterType、resultType就不用写全路径名了-->
+        <property name="typeAliasesPackage" value="com.itheima.domain"/>
+<!--        扫描mapper.xml文件-->
+        <property name="mapperLocations" value="classpath:com/itheima/dao/*.xml"/>
+    </bean>
+
+<!--    扫描dao层接口,生成包下所有接口的代理对象，并且放入spring容器中-->
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.itheima.dao"/>
+    </bean>
+
+<!--    配置spring的声明式事务管理器-->
+    <bean id="dataSourceTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="dataSourceTransactionManager"/>
+</beans>

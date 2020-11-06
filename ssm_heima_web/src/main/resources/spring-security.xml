@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/security
+    http://www.springframework.org/schema/security/spring-security.xsd">
+<!--    配置不拦截的资源-->
+    <security:http pattern="/login.jsp" security="none"/>
+    <security:http pattern="/failer.jsp" security="none"/>
+<!--    **表示所有文件夹及里面子文件夹文件，而*只是不含有子文件夹中的文件-->
+    <security:http pattern="/img/**" security="none"/>
+    <security:http pattern="/css/**" security="none"/>
+    <security:http pattern="/plugins/**" security="none"/>
+
+<!--    原先security部分由controller层做的事情现在由spring security框架完成-->
+<!--    在配置文件中定义了登陆页面、登陆的路径、成功页面、失败页面等、还定义了认证操作具体service-->
+
+
+<!--    spring security在方法的权限控制上支持三种类型的注解：jsr250注解、@Secured注解、支持表达式注解-->
+<!--    方法1 开启jsr250注解-->
+<!--    <security:global-method-security jsr250-annotations="enabled"/>-->
+
+<!--    方法2 开启secured注解-->
+    <security:global-method-security secured-annotations="enabled"/>
+
+<!--    方法3 开启支持表达式注解-->
+<!--    <security:global-method-security pre-post-annotations="enabled"/>-->
+
+<!--    配置具体的规则-->
+<!--    auto-config="true": 不用自己写登陆页面，框架提供默认登陆页面-->
+<!--    use-expressions="false": 是否使用SPEL（spring expression language）表达式-->
+    <security:http auto-config="true" use-expressions="false">
+<!--        配置具体的拦截规则 pattern：请求路径， access:访问系统的人必须有ROLE_USER或ROLE_ADMIN权限，
+            当access的值是以"ROLE"开头时则会交给roleVoter处理-->
+
+<!--        如果上面的use-expressions="false"，可以这样使用-->
+        <security:intercept-url pattern="/**" access="ROLE_USER,ROLE_ADMIN"/>
+
+<!--        如果上面的use-expressions="true"，要这样使用-->
+<!--        <security:intercept-url pattern="/**" access="hasAnyRole('ROLE_USER','ROLE_ADMIN')"/>-->
+<!--        定义跳转的具体页面-->
+<!--        登陆页面：/login.jsp； 登陆路径：/login.do； 认证失败页面：/failer.jsp; 登陆成功页面： /pages/main.jsp-->
+        <security:form-login login-page="/login.jsp"
+                             login-processing-url="/login.do"
+                             default-target-url="index.jsp"
+                             authentication-failure-url="/failer.jsp"
+                            authentication-success-forward-url="/pages/main.jsp"/>
+<!--        关闭跨域请求-->
+        <security:csrf disabled="true"/>
+<!--        退出-->
+<!--        只要访问/logout.do路径，就会退出，自动将session杀死，并且跳转到/login.jsp页面-->
+        <security:logout invalidate-session="true" logout-url="/logout.do" logout-success-url="/login.jsp"/>
+    </security:http>
+
+<!--    添加该句，jsp页面中就能解析web安全EL表达式，并且上面的use-expressions不用改为true了-->
+    <bean id="webexpressionHandler" class="org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler" />
+
+<!--    认证管理：切换成数据库中的用户名和密码-->
+    <security:authentication-manager>
+<!--        使用userService(service层定义)这个bean帮忙完成认证操作-->
+        <security:authentication-provider user-service-ref="userService">
+<!--            配置加密方式-->
+            <security:password-encoder ref="passwordEncoder"/>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+<!--    配置加密类-->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+
+<!--    入门方式：在内存中存放用户名和密码-->
+<!--    <security:authentication-manager>-->
+<!--        <security:authentication-provider>-->
+<!--            <security:user-service>-->
+<!--                <security:user name="admin" password="{noop}admin" authorities="ROLE_USER"/>-->
+<!--            </security:user-service>-->
+<!--        </security:authentication-provider>-->
+<!--    </security:authentication-manager>-->
+</beans>
